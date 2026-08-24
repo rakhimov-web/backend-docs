@@ -5,7 +5,7 @@ const { postRole } = require("../controllers/role.controller");
 
 /**
  * @swagger
- * tags
+ * tags:
  *   name: role
  *   description: Role detection
  */
