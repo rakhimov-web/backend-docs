@@ -2,18 +2,18 @@ const { Role } = require("../model/roleSchema.js");
 
 const postRole = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { role } = req.body;
 
     const allowedRoles = ["admin", "teacher", "student"];
 
-    if (!allowedRoles.includes(name)) {
+    if (!allowedRoles.includes(role)) {
       return res.status(400).json({
         success: false,
         message: "Ruxsat berilmagan role kiritildi!",
       });
     }
 
-    const newRole = new Role({ name });
+    const newRole = new Role({ role });
     await newRole.save();
 
     return res.status(201).json({
