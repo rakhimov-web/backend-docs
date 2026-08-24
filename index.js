@@ -39,7 +39,12 @@ const swaggerOptions = {
     },
     servers: [
       {
+        url: "https://my-swagger-mongodb.onrender.com",
+        description: "Live server...",
+      },
+      {
         url: "http://localhost:5000",
+        description: "Server is running on localhost:5000...",
       },
     ],
   },
