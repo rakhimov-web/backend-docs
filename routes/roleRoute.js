@@ -30,8 +30,6 @@ const { postRole } = require("../controllers/role.controller");
  *     responses:
  *       '201':
  *         description: Role posted successfully
- *       '400':
- *         description: Validation error
  *       '500':
  *         description: Internal server error
  */
