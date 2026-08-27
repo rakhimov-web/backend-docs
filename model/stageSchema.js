@@ -1,8 +1,8 @@
 const { Schema, model } = require("mongoose");
 
-const roleSchema = new Schema({
+const stageSchema = new Schema({
   name: { type: String, required: true, trim: true },
 });
 
-const Role = model("Role", roleSchema);
-module.exports = { Role };
+const Stage = model("Stage", stageSchema);
+module.exports = { Stage };
