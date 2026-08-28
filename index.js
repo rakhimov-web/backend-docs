@@ -67,12 +67,12 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: `http://localhost:${PORT}`,
-        description: "Local development",
-      },
-      {
         url: "https://my-swagger-mongodb.onrender.com",
         description: "Production (Render)",
+      },
+      {
+        url: `http://localhost:${PORT}`,
+        description: "Local development",
       },
     ],
   },
