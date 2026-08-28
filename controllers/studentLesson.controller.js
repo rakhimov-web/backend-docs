@@ -3,64 +3,72 @@ const { StudentLesson } = require("../model/studentLessonSchema");
 const postStudentLesson = async (req, res) => {
   try {
     const { lesson_id, student_id, is_there, reason, be_paid } = req.body;
-    const newPivot = new StudentLesson({
+    const newStudentLesson = new StudentLesson({
       lesson_id,
       student_id,
       is_there,
       reason,
       be_paid,
     });
-    await newPivot.save();
+    await newStudentLesson.save();
     return res.status(201).json({
       success: true,
       message: "Davomat saqlandi",
-      innerData: newPivot,
     });
   } catch (error) {
     console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    return res.status(500).json({
+      success: false,
+      message: "Server xatosi: Davomat saqlashda xato yuz berdi",
+    });
   }
 };
 
+// -----------------Get StudentLessons-----------------
 const getStudentLessons = async (req, res) => {
   try {
-    const data = await StudentLesson.find({});
-    return res.status(200).json({
+    const studentLessons = await StudentLesson.find({});
+    res.json({
       success: true,
-      message: "Barcha davomatlar ro'yxati olingan",
-      innerData: data,
+      message: "Barcha davomatlar ro'yxati olingan.",
+      innerData: studentLessons,
     });
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    console.error("Error fetching student lessons:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server xatosi: Davomatlarni olishda xato yuz berdi.",
+    });
   }
 };
 
+// -------------------------Update student lesson--------------------
 const updateStudentLesson = async (req, res) => {
   try {
     const { id } = req.params;
     const { lesson_id, student_id, is_there, reason, be_paid } = req.body;
-
-    const updatedPivot = await StudentLesson.findByIdAndUpdate(
+    const updateStudentLesson = await StudentLesson.findByIdAndUpdate(
       id,
       { lesson_id, student_id, is_there, reason, be_paid },
       { new: true },
     );
-
-    if (!updatedPivot) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Davomat yozuvi topilmadi" });
+    if (!updateStudentLesson) {
+      return res.status(404).json({
+        success: false,
+        message: "Student lesson not found",
+      });
     }
-
-    return res.status(200).json({
+    res.json({
       success: true,
-      message: "Davomat yangilandi",
-      innerData: updatedPivot,
+      message: "Student lesson updated successfully!",
+      studentLesson: updateStudentLesson,
     });
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
   }
 };
 

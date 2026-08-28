@@ -3,45 +3,56 @@ const { GroupStuff } = require("../model/groupStuffSchema");
 const postGroupStuff = async (req, res) => {
   try {
     const { group_id, stuff_id } = req.body;
-    const newPivot = new GroupStuff({ group_id, stuff_id });
-    await newPivot.save();
+    const newGroupStuff = new GroupStuff({ group_id, stuff_id });
+    await newGroupStuff.save();
     return res.status(201).json({
       success: true,
       message: "Xodim guruhga biriktirildi",
-      innerData: newPivot,
     });
   } catch (error) {
     console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    return res.status(500).json({
+      success: false,
+      message: "Server xatosi: Biriktirishda xato yuz berdi",
+    });
   }
 };
 
+// -----------------Get GroupStuffs-----------------
 const getGroupStuffs = async (req, res) => {
   try {
-    const data = await GroupStuff.find({});
-    return res.status(200).json({
+    const groupStuffs = await GroupStuff.find({});
+    res.json({
       success: true,
-      message: "Barcha birikmalar ro'yxati olingan",
-      innerData: data,
+      message: "Barcha birikmalar ro'yxati olingan.",
+      innerData: groupStuffs,
     });
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    console.error("Error fetching group stuffs:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server xatosi: Birikmalarni olishda xato yuz berdi.",
+    });
   }
 };
 
+// Delete GroupStuff
 const deleteGroupStuff = async (req, res) => {
   try {
-    const deletedPivot = await GroupStuff.findByIdAndDelete(req.params.id);
+    const groupStuffId = req.params.id;
+    const deleteGroupStuff = await GroupStuff.findByIdAndDelete(groupStuffId);
 
-    if (!deletedPivot) {
-      return res.status(404).json({ message: "Birikma topilmadi" });
+    if (!deleteGroupStuff) {
+      return res.status(404).json({ message: "Group stuff not found" });
     }
 
-    return res.json({ message: "Birikma o'chirildi", deletedPivot });
+    res.json({
+      message: "Group stuff deleted successfully",
+      deleteGroupStuff,
+    });
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ message: "Server xatosi" });
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 

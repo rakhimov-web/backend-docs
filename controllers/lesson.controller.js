@@ -3,7 +3,6 @@ const { Lesson } = require("../model/lessonSchema");
 const postLesson = async (req, res) => {
   try {
     const { lesson_theme, lesson_number, group_id, lesson_date } = req.body;
-
     const newLesson = new Lesson({
       lesson_theme,
       lesson_number,
@@ -14,28 +13,98 @@ const postLesson = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Dars yaratildi",
-      innerData: newLesson,
     });
   } catch (error) {
     console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    return res.status(500).json({
+      success: false,
+      message: "Server xatosi: Dars yaratishda xato yuz berdi",
+    });
   }
 };
 
+// -----------------Get Lessons-----------------
 const getLessons = async (req, res) => {
   try {
     const lessons = await Lesson.find({});
-    return res.status(200).json({
+    res.json({
       success: true,
-      message: "Barcha darslar ro'yxati olingan",
+      message: "Barcha darslar ro'yxati olingan.",
       innerData: lessons,
     });
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    console.error("Error fetching lessons:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server xatosi: Darslarni olishda xato yuz berdi.",
+    });
   }
 };
 
+// -----------------Get lesson by id -----------------
+const getLessonById = async (req, res) => {
+  try {
+    const lessonId = req.params.id;
+    const lesson = await Lesson.findById(lessonId).populate("group_id");
+
+    if (!lesson) {
+      return res.status(404).json({ message: "Lesson not found" });
+    }
+    return res.status(200).json({ message: "Lesson found", lesson });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal Server Eror" });
+  }
+};
+
+// -------------------------Update lesson--------------------
+const updateLesson = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { lesson_theme, lesson_number, group_id, lesson_date } = req.body;
+    const updateLesson = await Lesson.findByIdAndUpdate(
+      id,
+      { lesson_theme, lesson_number, group_id, lesson_date },
+      { new: true },
+    );
+    if (!updateLesson) {
+      return res.status(404).json({
+        success: false,
+        message: "Lesson not found",
+      });
+    }
+    res.json({
+      success: true,
+      message: "Lesson updated successfully!",
+      lesson: updateLesson,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+};
+
+// Delete Lesson
+const deleteLesson = async (req, res) => {
+  try {
+    const lessonId = req.params.id;
+    const deleteLesson = await Lesson.findByIdAndDelete(lessonId);
+
+    if (!deleteLesson) {
+      return res.status(404).json({ message: "Lesson not found" });
+    }
+
+    res.json({ message: "Lesson deleted successfully", deleteLesson });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// ------------------search lesson--------------------
 const searchLessons = async (req, res) => {
   try {
     const { query } = req.query;
@@ -52,74 +121,18 @@ const searchLessons = async (req, res) => {
       return res.json({ message: "Bunday dars topilmadi" });
     }
 
-    return res.json(result);
+    res.json(result);
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ message: "Server xatosi" });
-  }
-};
-
-const getLessonById = async (req, res) => {
-  try {
-    const lesson = await Lesson.findById(req.params.id);
-
-    if (!lesson) {
-      return res.status(404).json({ success: false, message: "Dars topilmadi" });
-    }
-
-    return res.status(200).json({ success: true, innerData: lesson });
-  } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
-  }
-};
-
-const updateLesson = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { lesson_theme, lesson_number, group_id, lesson_date } = req.body;
-
-    const updatedLesson = await Lesson.findByIdAndUpdate(
-      id,
-      { lesson_theme, lesson_number, group_id, lesson_date },
-      { new: true },
-    );
-
-    if (!updatedLesson) {
-      return res.status(404).json({ success: false, message: "Dars topilmadi" });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "Dars yangilandi",
-      innerData: updatedLesson,
-    });
-  } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
-  }
-};
-
-const deleteLesson = async (req, res) => {
-  try {
-    const deletedLesson = await Lesson.findByIdAndDelete(req.params.id);
-
-    if (!deletedLesson) {
-      return res.status(404).json({ message: "Dars topilmadi" });
-    }
-
-    return res.json({ message: "Dars o'chirildi", deletedLesson });
-  } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ message: "Server xatosi" });
+    console.error("Error fetching lessons:", error);
+    res.status(500).json({ message: "Server error: Failed to fetch lessons." });
   }
 };
 
 module.exports = {
   postLesson,
   getLessons,
-  searchLessons,
   getLessonById,
   updateLesson,
   deleteLesson,
+  searchLessons,
 };

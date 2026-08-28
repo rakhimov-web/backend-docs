@@ -3,90 +3,102 @@ const { ReasonLid } = require("../model/reasonLidSchema");
 const postReasonLid = async (req, res) => {
   try {
     const { reason_lid } = req.body;
-    const newReason = new ReasonLid({ reason_lid });
-    await newReason.save();
+    const newReasonLid = new ReasonLid({ reason_lid });
+    await newReasonLid.save();
     return res.status(201).json({
       success: true,
       message: "Sabab yaratildi",
-      innerData: newReason,
     });
   } catch (error) {
     console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    return res.status(500).json({
+      success: false,
+      message: "Server xatosi: Sabab yaratishda xato yuz berdi",
+    });
   }
 };
 
+// -----------------Get ReasonLids-----------------
 const getReasonLids = async (req, res) => {
   try {
-    const reasons = await ReasonLid.find({});
-    return res.status(200).json({
+    const reasonLids = await ReasonLid.find({});
+    res.json({
       success: true,
-      message: "Barcha sabablar ro'yxati olingan",
-      innerData: reasons,
+      message: "Barcha sabablar ro'yxati olingan.",
+      innerData: reasonLids,
     });
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    console.error("Error fetching reason lids:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server xatosi: Sabablarni olishda xato yuz berdi.",
+    });
   }
 };
 
+// -----------------Get reason lid by id -----------------
 const getReasonLidById = async (req, res) => {
   try {
-    const reason = await ReasonLid.findById(req.params.id);
+    const reasonLidId = req.params.id;
+    const reasonLid = await ReasonLid.findById(reasonLidId);
 
-    if (!reason) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Sabab topilmadi" });
+    if (!reasonLid) {
+      return res.status(404).json({ message: "Reason lid not found" });
     }
-
-    return res.status(200).json({ success: true, innerData: reason });
-  } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    return res.status(200).json({ message: "Reason lid found", reasonLid });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal Server Eror" });
   }
 };
 
+// -------------------------Update reason lid--------------------
 const updateReasonLid = async (req, res) => {
   try {
     const { id } = req.params;
     const { reason_lid } = req.body;
-
-    const updatedReason = await ReasonLid.findByIdAndUpdate(
+    const updateReasonLid = await ReasonLid.findByIdAndUpdate(
       id,
       { reason_lid },
       { new: true },
     );
-
-    if (!updatedReason) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Sabab topilmadi" });
+    if (!updateReasonLid) {
+      return res.status(404).json({
+        success: false,
+        message: "Reason lid not found",
+      });
     }
-
-    return res.status(200).json({
+    res.json({
       success: true,
-      message: "Sabab yangilandi",
-      innerData: updatedReason,
+      message: "Reason lid updated successfully!",
+      reasonLid: updateReasonLid,
     });
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
   }
 };
 
+// Delete ReasonLid
 const deleteReasonLid = async (req, res) => {
   try {
-    const deletedReason = await ReasonLid.findByIdAndDelete(req.params.id);
+    const reasonLidId = req.params.id;
+    const deleteReasonLid = await ReasonLid.findByIdAndDelete(reasonLidId);
 
-    if (!deletedReason) {
-      return res.status(404).json({ message: "Sabab topilmadi" });
+    if (!deleteReasonLid) {
+      return res.status(404).json({ message: "Reason lid not found" });
     }
 
-    return res.json({ message: "Sabab o'chirildi", deletedReason });
+    res.json({
+      message: "Reason lid deleted successfully",
+      deleteReasonLid,
+    });
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ message: "Server xatosi" });
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 

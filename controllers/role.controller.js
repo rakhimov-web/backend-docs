@@ -8,77 +8,94 @@ const postRole = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Role yaratildi",
-      innerData: newRole,
     });
   } catch (error) {
     console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    return res.status(500).json({
+      success: false,
+      message: "Server xatosi: Role yaratishda xato yuz berdi",
+    });
   }
 };
 
+// -----------------Get Roles-----------------
 const getRoles = async (req, res) => {
   try {
     const roles = await Role.find({});
-    return res.status(200).json({
+    res.json({
       success: true,
-      message: "Barcha rollar ro'yxati olingan",
+      message: "Barcha rollar ro'yxati olingan.",
       innerData: roles,
     });
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    console.error("Error fetching roles:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server xatosi: Rollarni olishda xato yuz berdi.",
+    });
   }
 };
 
+// -----------------Get role by id -----------------
 const getRoleById = async (req, res) => {
   try {
-    const role = await Role.findById(req.params.id);
+    const roleId = req.params.id;
+    const role = await Role.findById(roleId);
 
     if (!role) {
-      return res.status(404).json({ success: false, message: "Role topilmadi" });
+      return res.status(404).json({ message: "Role not found" });
     }
-
-    return res.status(200).json({ success: true, innerData: role });
-  } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    return res.status(200).json({ message: "Role found", role });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal Server Eror" });
   }
 };
 
+// -------------------------Update role--------------------
 const updateRole = async (req, res) => {
   try {
     const { id } = req.params;
     const { name } = req.body;
-
-    const updatedRole = await Role.findByIdAndUpdate(id, { name }, { new: true });
-
-    if (!updatedRole) {
-      return res.status(404).json({ success: false, message: "Role topilmadi" });
+    const updateRole = await Role.findByIdAndUpdate(
+      id,
+      { name },
+      { new: true },
+    );
+    if (!updateRole) {
+      return res.status(404).json({
+        success: false,
+        message: "Role not found",
+      });
     }
-
-    return res.status(200).json({
+    res.json({
       success: true,
-      message: "Role yangilandi",
-      innerData: updatedRole,
+      message: "Role updated successfully!",
+      role: updateRole,
     });
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
   }
 };
 
+// Delete Role
 const deleteRole = async (req, res) => {
   try {
-    const deletedRole = await Role.findByIdAndDelete(req.params.id);
+    const roleId = req.params.id;
+    const deleteRole = await Role.findByIdAndDelete(roleId);
 
-    if (!deletedRole) {
-      return res.status(404).json({ message: "Role topilmadi" });
+    if (!deleteRole) {
+      return res.status(404).json({ message: "Role not found" });
     }
 
-    return res.json({ message: "Role o'chirildi", deletedRole });
+    res.json({ message: "Role deleted successfully", deleteRole });
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ message: "Server xatosi" });
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 

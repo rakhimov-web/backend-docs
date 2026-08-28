@@ -14,7 +14,6 @@ const postLid = async (req, res) => {
       lid_status_id,
       cancel_reason_id,
     } = req.body;
-
     const newLid = new Lid({
       first_name,
       last_name,
@@ -31,28 +30,124 @@ const postLid = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Lid yaratildi",
-      innerData: newLid,
     });
   } catch (error) {
     console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    return res.status(500).json({
+      success: false,
+      message: "Server xatosi: Lid yaratishda xato yuz berdi",
+    });
   }
 };
 
+// -----------------Get Lids-----------------
 const getLids = async (req, res) => {
   try {
     const lids = await Lid.find({});
-    return res.status(200).json({
+    res.json({
       success: true,
-      message: "Barcha lidlar ro'yxati olingan",
+      message: "Barcha lidlar ro'yxati olingan.",
       innerData: lids,
     });
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    console.error("Error fetching lids:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server xatosi: Lidlarni olishda xato yuz berdi.",
+    });
   }
 };
 
+// -----------------Get lid by id -----------------
+const getLidById = async (req, res) => {
+  try {
+    const lidId = req.params.id;
+    const lid = await Lid.findById(lidId)
+      .populate("lid_stage_id")
+      .populate("trial_lesson_group_id")
+      .populate("lid_status_id")
+      .populate("cancel_reason_id");
+
+    if (!lid) {
+      return res.status(404).json({ message: "Lid not found" });
+    }
+    return res.status(200).json({ message: "Lid found", lid });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal Server Eror" });
+  }
+};
+
+// -------------------------Update lid--------------------
+const updateLid = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      first_name,
+      last_name,
+      phone_number,
+      lid_stage_id,
+      test_date,
+      trial_lesson_date,
+      trial_lesson_time,
+      trial_lesson_group_id,
+      lid_status_id,
+      cancel_reason_id,
+    } = req.body;
+    const updateLid = await Lid.findByIdAndUpdate(
+      id,
+      {
+        first_name,
+        last_name,
+        phone_number,
+        lid_stage_id,
+        test_date,
+        trial_lesson_date,
+        trial_lesson_time,
+        trial_lesson_group_id,
+        lid_status_id,
+        cancel_reason_id,
+      },
+      { new: true },
+    );
+    if (!updateLid) {
+      return res.status(404).json({
+        success: false,
+        message: "Lid not found",
+      });
+    }
+    res.json({
+      success: true,
+      message: "Lid updated successfully!",
+      lid: updateLid,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+};
+
+// Delete Lid
+const deleteLid = async (req, res) => {
+  try {
+    const lidId = req.params.id;
+    const deleteLid = await Lid.findByIdAndDelete(lidId);
+
+    if (!deleteLid) {
+      return res.status(404).json({ message: "Lid not found" });
+    }
+
+    res.json({ message: "Lid deleted successfully", deleteLid });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// ------------------search lid--------------------
 const searchLids = async (req, res) => {
   try {
     const { query } = req.query;
@@ -73,96 +168,18 @@ const searchLids = async (req, res) => {
       return res.json({ message: "Bunday lid topilmadi" });
     }
 
-    return res.json(result);
+    res.json(result);
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ message: "Server xatosi" });
-  }
-};
-
-const getLidById = async (req, res) => {
-  try {
-    const lid = await Lid.findById(req.params.id);
-
-    if (!lid) {
-      return res.status(404).json({ success: false, message: "Lid topilmadi" });
-    }
-
-    return res.status(200).json({ success: true, innerData: lid });
-  } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
-  }
-};
-
-const updateLid = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const {
-      first_name,
-      last_name,
-      phone_number,
-      lid_stage_id,
-      test_date,
-      trial_lesson_date,
-      trial_lesson_time,
-      trial_lesson_group_id,
-      lid_status_id,
-      cancel_reason_id,
-    } = req.body;
-
-    const updatedLid = await Lid.findByIdAndUpdate(
-      id,
-      {
-        first_name,
-        last_name,
-        phone_number,
-        lid_stage_id,
-        test_date,
-        trial_lesson_date,
-        trial_lesson_time,
-        trial_lesson_group_id,
-        lid_status_id,
-        cancel_reason_id,
-      },
-      { new: true },
-    );
-
-    if (!updatedLid) {
-      return res.status(404).json({ success: false, message: "Lid topilmadi" });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "Lid yangilandi",
-      innerData: updatedLid,
-    });
-  } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
-  }
-};
-
-const deleteLid = async (req, res) => {
-  try {
-    const deletedLid = await Lid.findByIdAndDelete(req.params.id);
-
-    if (!deletedLid) {
-      return res.status(404).json({ message: "Lid topilmadi" });
-    }
-
-    return res.json({ message: "Lid o'chirildi", deletedLid });
-  } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ message: "Server xatosi" });
+    console.error("Error fetching lids:", error);
+    res.status(500).json({ message: "Server error: Failed to fetch lids." });
   }
 };
 
 module.exports = {
   postLid,
   getLids,
-  searchLids,
   getLidById,
   updateLid,
   deleteLid,
+  searchLids,
 };

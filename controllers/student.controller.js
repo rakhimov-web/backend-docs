@@ -4,7 +4,6 @@ const postStudent = async (req, res) => {
   try {
     const { first_name, last_name, phone_number, lid_id, birthday, gender } =
       req.body;
-
     const newStudent = new Student({
       first_name,
       last_name,
@@ -17,28 +16,106 @@ const postStudent = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Talaba yaratildi",
-      innerData: newStudent,
     });
   } catch (error) {
     console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    return res.status(500).json({
+      success: false,
+      message: "Server xatosi: Talaba yaratishda xato yuz berdi",
+    });
   }
 };
 
+// -----------------Get Students-----------------
 const getStudents = async (req, res) => {
   try {
     const students = await Student.find({});
-    return res.status(200).json({
+    res.json({
       success: true,
-      message: "Barcha talabalar ro'yxati olingan",
+      message: "Barcha talabalar ro'yxati olingan.",
       innerData: students,
     });
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    console.error("Error fetching students:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server xatosi: Talabalarni olishda xato yuz berdi.",
+    });
   }
 };
 
+// -----------------Get student by id -----------------
+const getStudentById = async (req, res) => {
+  try {
+    const studentId = req.params.id;
+    const student = await Student.findById(studentId).populate("lid_id");
+
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+    return res.status(200).json({ message: "Student found", student });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal Server Eror" });
+  }
+};
+
+// -------------------------Update student--------------------
+const updateStudent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { first_name, last_name, phone_number, lid_id, birthday, gender } =
+      req.body;
+    const updateStudent = await Student.findByIdAndUpdate(
+      id,
+      {
+        first_name,
+        last_name,
+        phone_number,
+        lid_id,
+        birthday,
+        gender,
+      },
+      { new: true },
+    );
+    if (!updateStudent) {
+      return res.status(404).json({
+        success: false,
+        message: "Student not found",
+      });
+    }
+    res.json({
+      success: true,
+      message: "Student updated successfully!",
+      student: updateStudent,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+};
+
+// Delete Student
+const deleteStudent = async (req, res) => {
+  try {
+    const studentId = req.params.id;
+    const deleteStudent = await Student.findByIdAndDelete(studentId);
+
+    if (!deleteStudent) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    res.json({ message: "Student deleted successfully", deleteStudent });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// ------------------search student--------------------
 const searchStudents = async (req, res) => {
   try {
     const { query } = req.query;
@@ -59,79 +136,20 @@ const searchStudents = async (req, res) => {
       return res.json({ message: "Bunday talaba topilmadi" });
     }
 
-    return res.json(result);
+    res.json(result);
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ message: "Server xatosi" });
-  }
-};
-
-const getStudentById = async (req, res) => {
-  try {
-    const student = await Student.findById(req.params.id);
-
-    if (!student) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Talaba topilmadi" });
-    }
-
-    return res.status(200).json({ success: true, innerData: student });
-  } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
-  }
-};
-
-const updateStudent = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { first_name, last_name, phone_number, lid_id, birthday, gender } =
-      req.body;
-
-    const updatedStudent = await Student.findByIdAndUpdate(
-      id,
-      { first_name, last_name, phone_number, lid_id, birthday, gender },
-      { new: true },
-    );
-
-    if (!updatedStudent) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Talaba topilmadi" });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "Talaba yangilandi",
-      innerData: updatedStudent,
+    console.error("Error fetching students:", error);
+    res.status(500).json({
+      message: "Server error: Failed to fetch students.",
     });
-  } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
-  }
-};
-
-const deleteStudent = async (req, res) => {
-  try {
-    const deletedStudent = await Student.findByIdAndDelete(req.params.id);
-
-    if (!deletedStudent) {
-      return res.status(404).json({ message: "Talaba topilmadi" });
-    }
-
-    return res.json({ message: "Talaba o'chirildi", deletedStudent });
-  } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ message: "Server xatosi" });
   }
 };
 
 module.exports = {
   postStudent,
   getStudents,
-  searchStudents,
   getStudentById,
   updateStudent,
   deleteStudent,
+  searchStudents,
 };

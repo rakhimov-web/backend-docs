@@ -3,90 +3,102 @@ const { LidStatus } = require("../model/lidStatusSchema");
 const postLidStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    const newStatus = new LidStatus({ status });
-    await newStatus.save();
+    const newLidStatus = new LidStatus({ status });
+    await newLidStatus.save();
     return res.status(201).json({
       success: true,
       message: "Lid statusi yaratildi",
-      innerData: newStatus,
     });
   } catch (error) {
     console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    return res.status(500).json({
+      success: false,
+      message: "Server xatosi: Lid statusi yaratishda xato yuz berdi",
+    });
   }
 };
 
+// -----------------Get LidStatuses-----------------
 const getLidStatuses = async (req, res) => {
   try {
-    const statuses = await LidStatus.find({});
-    return res.status(200).json({
+    const lidStatuses = await LidStatus.find({});
+    res.json({
       success: true,
-      message: "Barcha lid statuslari ro'yxati olingan",
-      innerData: statuses,
+      message: "Barcha lid statuslari ro'yxati olingan.",
+      innerData: lidStatuses,
     });
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    console.error("Error fetching lid statuses:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server xatosi: Lid statuslarini olishda xato yuz berdi.",
+    });
   }
 };
 
+// -----------------Get lid status by id -----------------
 const getLidStatusById = async (req, res) => {
   try {
-    const status = await LidStatus.findById(req.params.id);
+    const lidStatusId = req.params.id;
+    const lidStatus = await LidStatus.findById(lidStatusId);
 
-    if (!status) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Lid statusi topilmadi" });
+    if (!lidStatus) {
+      return res.status(404).json({ message: "Lid status not found" });
     }
-
-    return res.status(200).json({ success: true, innerData: status });
-  } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    return res.status(200).json({ message: "Lid status found", lidStatus });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal Server Eror" });
   }
 };
 
+// -------------------------Update lid status--------------------
 const updateLidStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-
-    const updatedStatus = await LidStatus.findByIdAndUpdate(
+    const updateLidStatus = await LidStatus.findByIdAndUpdate(
       id,
       { status },
       { new: true },
     );
-
-    if (!updatedStatus) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Lid statusi topilmadi" });
+    if (!updateLidStatus) {
+      return res.status(404).json({
+        success: false,
+        message: "Lid status not found",
+      });
     }
-
-    return res.status(200).json({
+    res.json({
       success: true,
-      message: "Lid statusi yangilandi",
-      innerData: updatedStatus,
+      message: "Lid status updated successfully!",
+      lidStatus: updateLidStatus,
     });
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
   }
 };
 
+// Delete LidStatus
 const deleteLidStatus = async (req, res) => {
   try {
-    const deletedStatus = await LidStatus.findByIdAndDelete(req.params.id);
+    const lidStatusId = req.params.id;
+    const deleteLidStatus = await LidStatus.findByIdAndDelete(lidStatusId);
 
-    if (!deletedStatus) {
-      return res.status(404).json({ message: "Lid statusi topilmadi" });
+    if (!deleteLidStatus) {
+      return res.status(404).json({ message: "Lid status not found" });
     }
 
-    return res.json({ message: "Lid statusi o'chirildi", deletedStatus });
+    res.json({
+      message: "Lid status deleted successfully",
+      deleteLidStatus,
+    });
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ message: "Server xatosi" });
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 

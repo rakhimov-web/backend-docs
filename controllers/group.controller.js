@@ -14,7 +14,6 @@ const postGroup = async (req, res) => {
       lessons_quant,
       is_active,
     } = req.body;
-
     const newGroup = new Group({
       group_name,
       lesson_start_time,
@@ -31,28 +30,122 @@ const postGroup = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Guruh yaratildi",
-      innerData: newGroup,
     });
   } catch (error) {
     console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    return res.status(500).json({
+      success: false,
+      message: "Server xatosi: Guruh yaratishda xato yuz berdi",
+    });
   }
 };
 
+// -----------------Get Groups-----------------
 const getGroups = async (req, res) => {
   try {
     const groups = await Group.find({});
-    return res.status(200).json({
+    res.json({
       success: true,
-      message: "Barcha guruhlar ro'yxati olingan",
+      message: "Barcha guruhlar ro'yxati olingan.",
       innerData: groups,
     });
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    console.error("Error fetching groups:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server xatosi: Guruhlarni olishda xato yuz berdi.",
+    });
   }
 };
 
+// -----------------Get group by id -----------------
+const getGroupById = async (req, res) => {
+  try {
+    const groupId = req.params.id;
+    const group = await Group.findById(groupId)
+      .populate("group_stage_id")
+      .populate("branch_id");
+
+    if (!group) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+    return res.status(200).json({ message: "Group found", group });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal Server Eror" });
+  }
+};
+
+// -------------------------Update group--------------------
+const updateGroup = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      group_name,
+      lesson_start_time,
+      lesson_continuous,
+      lesson_week_day,
+      group_stage_id,
+      room_number,
+      room_floor,
+      branch_id,
+      lessons_quant,
+      is_active,
+    } = req.body;
+    const updateGroup = await Group.findByIdAndUpdate(
+      id,
+      {
+        group_name,
+        lesson_start_time,
+        lesson_continuous,
+        lesson_week_day,
+        group_stage_id,
+        room_number,
+        room_floor,
+        branch_id,
+        lessons_quant,
+        is_active,
+      },
+      { new: true },
+    );
+    if (!updateGroup) {
+      return res.status(404).json({
+        success: false,
+        message: "Group not found",
+      });
+    }
+    res.json({
+      success: true,
+      message: "Group updated successfully!",
+      group: updateGroup,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+};
+
+// Delete Group
+const deleteGroup = async (req, res) => {
+  try {
+    const groupId = req.params.id;
+    const deleteGroup = await Group.findByIdAndDelete(groupId);
+
+    if (!deleteGroup) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+
+    res.json({ message: "Group deleted successfully", deleteGroup });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// ------------------search group--------------------
 const searchGroups = async (req, res) => {
   try {
     const { query } = req.query;
@@ -69,96 +162,18 @@ const searchGroups = async (req, res) => {
       return res.json({ message: "Bunday guruh topilmadi" });
     }
 
-    return res.json(result);
+    res.json(result);
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ message: "Server xatosi" });
-  }
-};
-
-const getGroupById = async (req, res) => {
-  try {
-    const group = await Group.findById(req.params.id);
-
-    if (!group) {
-      return res.status(404).json({ success: false, message: "Guruh topilmadi" });
-    }
-
-    return res.status(200).json({ success: true, innerData: group });
-  } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
-  }
-};
-
-const updateGroup = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const {
-      group_name,
-      lesson_start_time,
-      lesson_continuous,
-      lesson_week_day,
-      group_stage_id,
-      room_number,
-      room_floor,
-      branch_id,
-      lessons_quant,
-      is_active,
-    } = req.body;
-
-    const updatedGroup = await Group.findByIdAndUpdate(
-      id,
-      {
-        group_name,
-        lesson_start_time,
-        lesson_continuous,
-        lesson_week_day,
-        group_stage_id,
-        room_number,
-        room_floor,
-        branch_id,
-        lessons_quant,
-        is_active,
-      },
-      { new: true },
-    );
-
-    if (!updatedGroup) {
-      return res.status(404).json({ success: false, message: "Guruh topilmadi" });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "Guruh yangilandi",
-      innerData: updatedGroup,
-    });
-  } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
-  }
-};
-
-const deleteGroup = async (req, res) => {
-  try {
-    const deletedGroup = await Group.findByIdAndDelete(req.params.id);
-
-    if (!deletedGroup) {
-      return res.status(404).json({ message: "Guruh topilmadi" });
-    }
-
-    return res.json({ message: "Guruh o'chirildi", deletedGroup });
-  } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ message: "Server xatosi" });
+    console.error("Error fetching groups:", error);
+    res.status(500).json({ message: "Server error: Failed to fetch groups." });
   }
 };
 
 module.exports = {
   postGroup,
   getGroups,
-  searchGroups,
   getGroupById,
   updateGroup,
   deleteGroup,
+  searchGroups,
 };

@@ -3,45 +3,56 @@ const { StuffRole } = require("../model/stuffRoleSchema");
 const postStuffRole = async (req, res) => {
   try {
     const { stuff_id, role_id } = req.body;
-    const newPivot = new StuffRole({ stuff_id, role_id });
-    await newPivot.save();
+    const newStuffRole = new StuffRole({ stuff_id, role_id });
+    await newStuffRole.save();
     return res.status(201).json({
       success: true,
       message: "Rol xodimga biriktirildi",
-      innerData: newPivot,
     });
   } catch (error) {
     console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    return res.status(500).json({
+      success: false,
+      message: "Server xatosi: Biriktirishda xato yuz berdi",
+    });
   }
 };
 
+// -----------------Get StuffRoles-----------------
 const getStuffRoles = async (req, res) => {
   try {
-    const data = await StuffRole.find({});
-    return res.status(200).json({
+    const stuffRoles = await StuffRole.find({});
+    res.json({
       success: true,
-      message: "Barcha birikmalar ro'yxati olingan",
-      innerData: data,
+      message: "Barcha birikmalar ro'yxati olingan.",
+      innerData: stuffRoles,
     });
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    console.error("Error fetching stuff roles:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server xatosi: Birikmalarni olishda xato yuz berdi.",
+    });
   }
 };
 
+// Delete StuffRole
 const deleteStuffRole = async (req, res) => {
   try {
-    const deletedPivot = await StuffRole.findByIdAndDelete(req.params.id);
+    const stuffRoleId = req.params.id;
+    const deleteStuffRole = await StuffRole.findByIdAndDelete(stuffRoleId);
 
-    if (!deletedPivot) {
-      return res.status(404).json({ message: "Birikma topilmadi" });
+    if (!deleteStuffRole) {
+      return res.status(404).json({ message: "Stuff role not found" });
     }
 
-    return res.json({ message: "Birikma o'chirildi", deletedPivot });
+    res.json({
+      message: "Stuff role deleted successfully",
+      deleteStuffRole,
+    });
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ message: "Server xatosi" });
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 

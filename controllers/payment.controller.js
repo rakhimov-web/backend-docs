@@ -10,7 +10,6 @@ const postPayment = async (req, res) => {
       is_paid,
       total_attent,
     } = req.body;
-
     const newPayment = new Payment({
       student_id,
       payment_last_date,
@@ -23,28 +22,112 @@ const postPayment = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "To'lov yaratildi",
-      innerData: newPayment,
     });
   } catch (error) {
     console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    return res.status(500).json({
+      success: false,
+      message: "Server xatosi: To'lov yaratishda xato yuz berdi",
+    });
   }
 };
 
+// -----------------Get Payments-----------------
 const getPayments = async (req, res) => {
   try {
     const payments = await Payment.find({});
-    return res.status(200).json({
+    res.json({
       success: true,
-      message: "Barcha to'lovlar ro'yxati olingan",
+      message: "Barcha to'lovlar ro'yxati olingan.",
       innerData: payments,
     });
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    console.error("Error fetching payments:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server xatosi: To'lovlarni olishda xato yuz berdi.",
+    });
   }
 };
 
+// -----------------Get payment by id -----------------
+const getPaymentById = async (req, res) => {
+  try {
+    const paymentId = req.params.id;
+    const payment = await Payment.findById(paymentId).populate("student_id");
+
+    if (!payment) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+    return res.status(200).json({ message: "Payment found", payment });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal Server Eror" });
+  }
+};
+
+// -------------------------Update payment--------------------
+const updatePayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      student_id,
+      payment_last_date,
+      payment_date,
+      price,
+      is_paid,
+      total_attent,
+    } = req.body;
+    const updatePayment = await Payment.findByIdAndUpdate(
+      id,
+      {
+        student_id,
+        payment_last_date,
+        payment_date,
+        price,
+        is_paid,
+        total_attent,
+      },
+      { new: true },
+    );
+    if (!updatePayment) {
+      return res.status(404).json({
+        success: false,
+        message: "Payment not found",
+      });
+    }
+    res.json({
+      success: true,
+      message: "Payment updated successfully!",
+      payment: updatePayment,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+};
+
+// Delete Payment
+const deletePayment = async (req, res) => {
+  try {
+    const paymentId = req.params.id;
+    const deletePayment = await Payment.findByIdAndDelete(paymentId);
+
+    if (!deletePayment) {
+      return res.status(404).json({ message: "Payment not found" });
+    }
+
+    res.json({ message: "Payment deleted successfully", deletePayment });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// ------------------search payment--------------------
 const searchPayments = async (req, res) => {
   try {
     const { query } = req.query;
@@ -59,92 +142,20 @@ const searchPayments = async (req, res) => {
       return res.json({ message: "Bunday to'lov topilmadi" });
     }
 
-    return res.json(result);
+    res.json(result);
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ message: "Server xatosi" });
-  }
-};
-
-const getPaymentById = async (req, res) => {
-  try {
-    const payment = await Payment.findById(req.params.id);
-
-    if (!payment) {
-      return res
-        .status(404)
-        .json({ success: false, message: "To'lov topilmadi" });
-    }
-
-    return res.status(200).json({ success: true, innerData: payment });
-  } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
-  }
-};
-
-const updatePayment = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const {
-      student_id,
-      payment_last_date,
-      payment_date,
-      price,
-      is_paid,
-      total_attent,
-    } = req.body;
-
-    const updatedPayment = await Payment.findByIdAndUpdate(
-      id,
-      {
-        student_id,
-        payment_last_date,
-        payment_date,
-        price,
-        is_paid,
-        total_attent,
-      },
-      { new: true },
-    );
-
-    if (!updatedPayment) {
-      return res
-        .status(404)
-        .json({ success: false, message: "To'lov topilmadi" });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: "To'lov yangilandi",
-      innerData: updatedPayment,
+    console.error("Error fetching payments:", error);
+    res.status(500).json({
+      message: "Server error: Failed to fetch payments.",
     });
-  } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
-  }
-};
-
-const deletePayment = async (req, res) => {
-  try {
-    const deletedPayment = await Payment.findByIdAndDelete(req.params.id);
-
-    if (!deletedPayment) {
-      return res.status(404).json({ message: "To'lov topilmadi" });
-    }
-
-    return res.json({ message: "To'lov o'chirildi", deletedPayment });
-  } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ message: "Server xatosi" });
   }
 };
 
 module.exports = {
   postPayment,
   getPayments,
-  searchPayments,
   getPaymentById,
   updatePayment,
   deletePayment,
+  searchPayments,
 };

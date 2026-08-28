@@ -3,91 +3,99 @@ const { Branch } = require("../model/branchSchema");
 const postBranch = async (req, res) => {
   try {
     const { name, address, call_number } = req.body;
-
     const newBranch = new Branch({ name, address, call_number });
     await newBranch.save();
     return res.status(201).json({
       success: true,
       message: "Filial yaratildi",
-      innerData: newBranch,
     });
   } catch (error) {
     console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    return res.status(500).json({
+      success: false,
+      message: "Server xatosi: Filial yaratishda xato yuz berdi",
+    });
   }
 };
 
+// -----------------Get Branches-----------------
 const getBranches = async (req, res) => {
   try {
     const branches = await Branch.find({});
-    return res.status(200).json({
+    res.json({
       success: true,
-      message: "Barcha filiallar ro'yxati olingan",
+      message: "Barcha filiallar ro'yxati olingan.",
       innerData: branches,
     });
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    console.error("Error fetching branches:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server xatosi: Filiallarni olishda xato yuz berdi.",
+    });
   }
 };
 
+// -----------------Get branch by id -----------------
 const getBranchById = async (req, res) => {
   try {
-    const branch = await Branch.findById(req.params.id);
+    const branchId = req.params.id;
+    const branch = await Branch.findById(branchId);
 
     if (!branch) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Filial topilmadi" });
+      return res.status(404).json({ message: "Branch not found" });
     }
-
-    return res.status(200).json({ success: true, innerData: branch });
-  } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    return res.status(200).json({ message: "Branch found", branch });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Internal Server Eror" });
   }
 };
 
+// -------------------------Update branch--------------------
 const updateBranch = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, address, call_number } = req.body;
-
-    const updatedBranch = await Branch.findByIdAndUpdate(
+    const updateBranch = await Branch.findByIdAndUpdate(
       id,
       { name, address, call_number },
       { new: true },
     );
-
-    if (!updatedBranch) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Filial topilmadi" });
+    if (!updateBranch) {
+      return res.status(404).json({
+        success: false,
+        message: "Branch not found",
+      });
     }
-
-    return res.status(200).json({
+    res.json({
       success: true,
-      message: "Filial yangilandi",
-      innerData: updatedBranch,
+      message: "Branch updated successfully!",
+      branch: updateBranch,
     });
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ success: false, message: "Server xatosi" });
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
   }
 };
 
+// Delete Branch
 const deleteBranch = async (req, res) => {
   try {
-    const deletedBranch = await Branch.findByIdAndDelete(req.params.id);
+    const branchId = req.params.id;
+    const deleteBranch = await Branch.findByIdAndDelete(branchId);
 
-    if (!deletedBranch) {
-      return res.status(404).json({ message: "Filial topilmadi" });
+    if (!deleteBranch) {
+      return res.status(404).json({ message: "Branch not found" });
     }
 
-    return res.json({ message: "Filial o'chirildi", deletedBranch });
+    res.json({ message: "Branch deleted successfully", deleteBranch });
   } catch (error) {
-    console.error("Xato", error.message);
-    return res.status(500).json({ message: "Server xatosi" });
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
